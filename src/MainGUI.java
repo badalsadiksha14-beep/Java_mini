@@ -23,8 +23,9 @@ public class MainGUI extends JFrame {
 
     private void initializeGUI() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(900, 700);
-        setLayout(new BorderLayout(10, 10));
+        setSize(1100, 800);
+        setLayout(new BorderLayout(15, 15));
+        getContentPane().setBackground(new Color(240, 242, 245));
 
         JPanel topPanel = createInputPanel();
         JPanel centerPanel = createOutputPanel();
@@ -38,32 +39,51 @@ public class MainGUI extends JFrame {
     }
 
     private JPanel createInputPanel() {
-        JPanel panel = new JPanel(new GridLayout(1, 2, 10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JPanel panel = new JPanel(new GridLayout(1, 2, 15, 15));
+        panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 10, 15));
+        panel.setBackground(new Color(240, 242, 245));
 
-        JPanel routePanel = new JPanel(new BorderLayout(5, 5));
-        routePanel.setBorder(BorderFactory.createTitledBorder("Route Coordinates"));
+        JPanel routePanel = new JPanel(new BorderLayout(8, 8));
+        routePanel.setBackground(Color.WHITE);
+        routePanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 210), 1, true),
+            BorderFactory.createEmptyBorder(15, 15, 15, 15)));
 
-        JLabel routeLabel = new JLabel("<html><b>Enter route coordinates (one per line):</b><br>" +
-                "Format: latitude,longitude<br>" +
-                "Example: 34.0522,-118.2437</html>");
-        routeInputArea = new JTextArea(8, 30);
-        routeInputArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        JLabel routeLabel = new JLabel("<html><div style='font-size:11px;'><b style='font-size:13px; color:#2c3e50;'>📍 Route Coordinates</b><br><br>" +
+                "<span style='color:#555;'>Format: <code>latitude,longitude</code></span><br>" +
+                "<span style='color:#888;'>Example: 34.0522,-118.2437</span></div></html>");
+        routeLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
+        
+        routeInputArea = new JTextArea(9, 35);
+        routeInputArea.setFont(new Font("Consolas", Font.PLAIN, 13));
+        routeInputArea.setLineWrap(false);
+        routeInputArea.setMargin(new Insets(8, 8, 8, 8));
+        routeInputArea.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 230)));
         JScrollPane routeScroll = new JScrollPane(routeInputArea);
+        routeScroll.setBorder(BorderFactory.createEmptyBorder());
 
         routePanel.add(routeLabel, BorderLayout.NORTH);
         routePanel.add(routeScroll, BorderLayout.CENTER);
 
-        JPanel hazardPanel = new JPanel(new BorderLayout(5, 5));
-        hazardPanel.setBorder(BorderFactory.createTitledBorder("Hazard Zones"));
+        JPanel hazardPanel = new JPanel(new BorderLayout(8, 8));
+        hazardPanel.setBackground(Color.WHITE);
+        hazardPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 210), 1, true),
+            BorderFactory.createEmptyBorder(15, 15, 15, 15)));
 
-        JLabel hazardLabel = new JLabel("<html><b>Enter hazard zones (one per line):</b><br>" +
-                "Format: name,latitude,longitude,radius_km<br>" +
-                "Example: Earthquake Zone,34.05,-118.25,50<br>" +
-                "<i>Risk calculated automatically from proximity</i></html>");
-        hazardZoneInputArea = new JTextArea(8, 30);
-        hazardZoneInputArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        JLabel hazardLabel = new JLabel("<html><div style='font-size:11px;'><b style='font-size:13px; color:#2c3e50;'>⚠️ Hazard Zones</b><br><br>" +
+                "<span style='color:#555;'>Format: <code>name,latitude,longitude,radius_km</code></span><br>" +
+                "<span style='color:#888;'>Example: Earthquake Zone,34.05,-118.25,50</span><br><br>" +
+                "<i style='color:#3498db;'>Risk calculated automatically from proximity</i></div></html>");
+        hazardLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
+        
+        hazardZoneInputArea = new JTextArea(9, 35);
+        hazardZoneInputArea.setFont(new Font("Consolas", Font.PLAIN, 13));
+        hazardZoneInputArea.setLineWrap(false);
+        hazardZoneInputArea.setMargin(new Insets(8, 8, 8, 8));
+        hazardZoneInputArea.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 230)));
         JScrollPane hazardScroll = new JScrollPane(hazardZoneInputArea);
+        hazardScroll.setBorder(BorderFactory.createEmptyBorder());
 
         hazardPanel.add(hazardLabel, BorderLayout.NORTH);
         hazardPanel.add(hazardScroll, BorderLayout.CENTER);
@@ -75,46 +95,58 @@ public class MainGUI extends JFrame {
     }
 
     private JPanel createOutputPanel() {
-        JPanel panel = new JPanel(new BorderLayout(5, 5));
-        panel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(5, 15, 10, 15));
+        panel.setBackground(new Color(240, 242, 245));
 
-        JLabel outputLabel = new JLabel("Analysis Results:");
-        outputLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        headerPanel.setBackground(Color.WHITE);
+        headerPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 210), 1, true),
+            BorderFactory.createEmptyBorder(12, 15, 12, 15)));
+        
+        JLabel outputLabel = new JLabel("📊 Analysis Results");
+        outputLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        outputLabel.setForeground(new Color(44, 62, 80));
+        headerPanel.add(outputLabel);
 
-        outputArea = new JTextArea(20, 70);
+        outputArea = new JTextArea(22, 80);
         outputArea.setEditable(false);
-        outputArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        outputArea.setBackground(new Color(245, 245, 245));
+        outputArea.setFont(new Font("Consolas", Font.PLAIN, 12));
+        outputArea.setBackground(Color.WHITE);
+        outputArea.setForeground(new Color(33, 33, 33));
+        outputArea.setMargin(new Insets(15, 15, 15, 15));
+        outputArea.setLineWrap(true);
+        outputArea.setWrapStyleWord(true);
+        
         JScrollPane outputScroll = new JScrollPane(outputArea);
+        outputScroll.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 210), 1, true),
+            BorderFactory.createEmptyBorder()));
 
-        panel.add(outputLabel, BorderLayout.NORTH);
+        panel.add(headerPanel, BorderLayout.NORTH);
         panel.add(outputScroll, BorderLayout.CENTER);
 
         return panel;
     }
 
     private JPanel createButtonPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 15));
+        panel.setBorder(BorderFactory.createEmptyBorder(5, 15, 15, 15));
+        panel.setBackground(new Color(240, 242, 245));
 
-        analyzeButton = new JButton("Analyze Route Risk");
-        analyzeButton.setFont(new Font("Arial", Font.BOLD, 14));
-        analyzeButton.setBackground(new Color(70, 130, 180));
-        analyzeButton.setForeground(Color.WHITE);
-        analyzeButton.setFocusPainted(false);
-        analyzeButton.addActionListener(e -> analyzeRoute());
-
-        clearButton = new JButton("Clear All");
-        clearButton.setFont(new Font("Arial", Font.PLAIN, 14));
-        clearButton.addActionListener(e -> clearAll());
-
-        loadSampleDataButton = new JButton("Load Sample Data");
-        loadSampleDataButton.setFont(new Font("Arial", Font.PLAIN, 14));
+        loadSampleDataButton = createStyledButton("🌎 Load Sample Data", new Color(95, 99, 104), Color.WHITE);
         loadSampleDataButton.addActionListener(e -> loadSampleData());
 
-        JButton loadNepalDataButton = new JButton("Load Nepal Data");
-        loadNepalDataButton.setFont(new Font("Arial", Font.PLAIN, 14));
+        JButton loadNepalDataButton = createStyledButton("🏔️ Load Nepal Data", new Color(95, 99, 104), Color.WHITE);
         loadNepalDataButton.addActionListener(e -> loadNepalData());
+
+        analyzeButton = createStyledButton("🔍 Analyze Route Risk", new Color(46, 125, 50), Color.WHITE);
+        analyzeButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        analyzeButton.addActionListener(e -> analyzeRoute());
+
+        clearButton = createStyledButton("🗑️ Clear All", new Color(211, 47, 47), Color.WHITE);
+        clearButton.addActionListener(e -> clearAll());
 
         panel.add(loadSampleDataButton);
         panel.add(loadNepalDataButton);
@@ -122,6 +154,32 @@ public class MainGUI extends JFrame {
         panel.add(clearButton);
 
         return panel;
+    }
+
+    private JButton createStyledButton(String text, Color bgColor, Color fgColor) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        button.setBackground(bgColor);
+        button.setForeground(fgColor);
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setOpaque(true);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setPreferredSize(new Dimension(180, 40));
+        button.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(bgColor.darker(), 1),
+            BorderFactory.createEmptyBorder(8, 15, 8, 15)));
+        
+        button.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) {
+                button.setBackground(bgColor.brighter());
+            }
+            public void mouseExited(MouseEvent e) {
+                button.setBackground(bgColor);
+            }
+        });
+        
+        return button;
     }
 
     private boolean parseRouteInput() {
@@ -213,7 +271,7 @@ public class MainGUI extends JFrame {
     }
 
     private void analyzeRoute() {
-        outputArea.setText("Analyzing route...\n");
+        outputArea.setText("⏳ Analyzing route...\n");
 
         if (!parseRouteInput()) {
             return;
@@ -226,16 +284,35 @@ public class MainGUI extends JFrame {
         try {
             RiskAnalyzer.RiskAnalysisResult result = RiskAnalyzer.analyzeRoute(currentRoute, hazardZones);
 
-            outputArea.setText(result.getReport());
-
-            outputArea.append("\n=== INPUT SUMMARY ===\n\n");
-            outputArea.append(String.format("Route waypoints: %d\n", currentRoute.getWaypointCount()));
-            outputArea.append(String.format("Hazard zones: %d\n\n", hazardZones.size()));
-
-            outputArea.append("Hazard Zones:\n");
-            for (HazardZone zone : hazardZones) {
-                outputArea.append("  • " + zone.toString() + "\n");
+            StringBuilder output = new StringBuilder();
+            output.append(result.getReport());
+            
+            output.append("\n");
+            output.append("═".repeat(80)).append("\n");
+            output.append("\n📋 INPUT SUMMARY\n\n");
+            output.append(String.format("   Route Waypoints: %d points\n", currentRoute.getWaypointCount()));
+            output.append(String.format("   Hazard Zones: %d zones\n", hazardZones.size()));
+            output.append(String.format("   Total Segments: %d segments\n", currentRoute.getWaypointCount() - 1));
+            
+            output.append("\n🗺️  ROUTE WAYPOINTS\n\n");
+            List<Coordinate> waypoints = currentRoute.getWaypoints();
+            for (int i = 0; i < waypoints.size(); i++) {
+                Coordinate coord = waypoints.get(i);
+                output.append(String.format("   Point %d: %s\n", i + 1, coord.toString()));
             }
+            
+            output.append("\n⚠️  HAZARD ZONES\n\n");
+            for (int i = 0; i < hazardZones.size(); i++) {
+                HazardZone zone = hazardZones.get(i);
+                output.append(String.format("   %d. %s\n", i + 1, zone.toString()));
+            }
+            
+            output.append("\n");
+            output.append("═".repeat(80)).append("\n");
+            output.append("\n✅ Analysis completed successfully\n");
+            
+            outputArea.setText(output.toString());
+            outputArea.setCaretPosition(0);
 
         } catch (Exception e) {
             showError("Error during analysis: " + e.getMessage());
@@ -257,8 +334,7 @@ public class MainGUI extends JFrame {
                         "33.6846,-117.8265\n" +
                         "33.4936,-117.1484\n" +
                         "33.1959,-117.3795\n" +
-                        "32.7157,-117.1611"
-        );
+                        "32.7157,-117.1611");
 
         hazardZoneInputArea.setText(
                 "San Andreas Fault Zone,34.00,-118.00,80\n" +
@@ -282,8 +358,7 @@ public class MainGUI extends JFrame {
                         "27.4833,83.5500\n" +
                         "27.5167,83.4500\n" +
                         "28.0000,82.0000\n" +
-                        "28.3305,81.6084"
-        );
+                        "28.3305,81.6084");
 
         hazardZoneInputArea.setText(
                 "Main Himalayan Thrust,27.8,85.5,120\n" +
@@ -292,8 +367,7 @@ public class MainGUI extends JFrame {
                         "Siwalik Hills Landslide Area,27.6,84.0,35\n" +
                         "Rapti River Flood Plain,27.5,84.4,30\n" +
                         "Terai Flood Zone,27.4,83.5,50\n" +
-                        "Western Nepal Seismic Belt,28.5,82.0,80"
-        );
+                        "Western Nepal Seismic Belt,28.5,82.0,80");
 
         outputArea.setText("Nepal route data loaded! 🇳🇵\n\n" +
                 "Route: Kathmandu → Chitwan → Lumbini → Bardiya\n" +

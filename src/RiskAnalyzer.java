@@ -174,41 +174,79 @@ public class RiskAnalyzer {
 
         public String getReport() {
             StringBuilder sb = new StringBuilder();
-            sb.append("=== AUTOMATIC ROUTE RISK ANALYSIS REPORT ===\n\n");
-            sb.append(String.format("Total Route Distance: %.2f km\n", totalDistance));
-            sb.append(String.format("Computed Risk Score: %.2f / 100\n", riskScore));
-            sb.append(String.format("Risk Level: %s\n\n", riskLevel));
-            sb.append(String.format("Route Segments Affected: %d\n", affectedSegments));
-            sb.append(String.format("Hazard Zones Affecting Route: %d\n\n", zonesAffecting));
-            sb.append("Affected Segments:\n");
-            for (String factor : riskFactors) {
-                sb.append("  • ").append(factor).append("\n");
-            }
+            
             sb.append("\n");
-
-            sb.append("Risk Assessment:\n");
-            if (riskLevel.equals("LOW")) {
-                sb.append("  ✓ This route is SAFE (Risk Score: 0-30)\n");
-                sb.append("  The route avoids hazard zones or has minimal exposure.\n");
-                sb.append("  Normal travel precautions are sufficient.");
-            } else if (riskLevel.equals("MEDIUM")) {
-                sb.append("  ⚠ This route has MODERATE RISK (Risk Score: 31-60)\n");
-                sb.append("  The route passes through or near hazard zones.\n");
-                sb.append("  Consider alternative paths or take safety precautions.");
+            sb.append("═".repeat(80)).append("\n");
+            sb.append("   AUTOMATIC ROUTE RISK ANALYSIS REPORT\n");
+            sb.append("═".repeat(80)).append("\n\n");
+            
+            String riskIcon = riskLevel.equals("LOW") ? "✅" : riskLevel.equals("MEDIUM") ? "⚠️" : "🚫";
+            String riskBar = generateRiskBar(riskScore);
+            
+            sb.append("📏 DISTANCE & RISK METRICS\n\n");
+            sb.append(String.format("   Total Route Distance: %.2f km\n", totalDistance));
+            sb.append(String.format("   Risk Score: %.2f / 100\n", riskScore));
+            sb.append(String.format("   Risk Level: %s %s\n\n", riskIcon, riskLevel));
+            sb.append("   Risk Visualization:\n");
+            sb.append("   ").append(riskBar).append("\n\n");
+            
+            sb.append("📊 SEGMENT ANALYSIS\n\n");
+            sb.append(String.format("   Route Segments Affected: %d\n", affectedSegments));
+            sb.append(String.format("   Hazard Zones Affecting Route: %d\n\n", zonesAffecting));
+            
+            if (!riskFactors.isEmpty() && !riskFactors.get(0).contains("does not pass")) {
+                sb.append("🔍 AFFECTED SEGMENTS DETAILS\n\n");
+                for (String factor : riskFactors) {
+                    sb.append("   • ").append(factor).append("\n");
+                }
+                sb.append("\n");
             } else {
-                sb.append("  ⛔ This route is HIGH RISK (Risk Score: 61-100)\n");
-                sb.append("  The route has significant exposure to hazard zones.\n");
-                sb.append("  Strongly consider an alternative route or implement\n");
-                sb.append("  comprehensive safety measures if this route is necessary.");
+                sb.append("   ✅ No segments affected by hazard zones\n\n");
+            }
+
+            sb.append("━".repeat(80)).append("\n\n");
+            sb.append("📋 RISK ASSESSMENT\n\n");
+            if (riskLevel.equals("LOW")) {
+                sb.append("   ✅ SAFE ROUTE (Risk Score: 0-30)\n\n");
+                sb.append("   └─ The route avoids hazard zones or has minimal exposure.\n");
+                sb.append("   └─ Normal travel precautions are sufficient.\n");
+                sb.append("   └─ Recommended: Proceed with standard safety measures.\n");
+            } else if (riskLevel.equals("MEDIUM")) {
+                sb.append("   ⚠️  MODERATE RISK ROUTE (Risk Score: 31-60)\n\n");
+                sb.append("   └─ The route passes through or near hazard zones.\n");
+                sb.append("   └─ Recommended: Consider alternative paths.\n");
+                sb.append("   └─ If unavoidable: Take additional safety precautions.\n");
+            } else {
+                sb.append("   🚫 HIGH RISK ROUTE (Risk Score: 61-100)\n\n");
+                sb.append("   └─ The route has significant exposure to hazard zones.\n");
+                sb.append("   └─ Strongly Recommended: Seek an alternative route.\n");
+                sb.append("   └─ If unavoidable: Implement comprehensive safety measures.\n");
+                sb.append("   └─ Warning: Exercise extreme caution on this route.\n");
             }
 
             sb.append("\n");
-            sb.append("Calculation Method:\n");
-            sb.append("  Risk computed automatically from geospatial proximity.\n");
-            sb.append("  Formula: (Σ segment_length × proximity) / total_distance × 100\n");
-            sb.append("  Proximity = 1 - (distance_to_zone / zone_radius) when inside zone\n");
+            sb.append("━".repeat(80)).append("\n\n");
+            sb.append("🔬 CALCULATION METHOD\n\n");
+            sb.append("   Algorithm: Geospatial Proximity-Based Risk Assessment\n");
+            sb.append("   Formula: (Σ segment_length × proximity) / total_distance × 100\n");
+            sb.append("   Proximity: 1 - (distance_to_zone / zone_radius) when inside zone\n");
+            sb.append("   Threshold: LOW [0-30], MEDIUM [31-60], HIGH [61-100]\n");
 
             return sb.toString();
+        }
+        
+        private String generateRiskBar(double score) {
+            int filled = (int) Math.round(score / 2.5);
+            int empty = 40 - filled;
+            String bar = "[";
+            for (int i = 0; i < filled; i++) {
+                bar += "█";
+            }
+            for (int i = 0; i < empty; i++) {
+                bar += "░";
+            }
+            bar += String.format("] %.1f%%", score);
+            return bar;
         }
     }
 }

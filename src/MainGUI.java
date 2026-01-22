@@ -4,21 +4,7 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Main GUI application for the Route Risk Analysis System.
- * Provides a Swing-based interface for:
- * - Inputting route coordinates
- * - Defining hazard zones
- * - Analyzing route risk
- * - Displaying results
- * 
- * Layout:
- * - Input panel for route and hazard zone data
- * - Control buttons
- * - Output panel for analysis results
- */
 public class MainGUI extends JFrame {
-    // GUI Components
     private JTextArea routeInputArea;
     private JTextArea hazardZoneInputArea;
     private JTextArea outputArea;
@@ -26,51 +12,35 @@ public class MainGUI extends JFrame {
     private JButton clearButton;
     private JButton loadSampleDataButton;
 
-    // Data storage
     private Route currentRoute;
     private List<HazardZone> hazardZones;
 
-    /**
-     * Constructor to create and set up the GUI.
-     */
     public MainGUI() {
         super("Route Risk Analysis System - University Geospatial Project");
         hazardZones = new ArrayList<>();
         initializeGUI();
     }
 
-    /**
-     * Initialize and layout all GUI components.
-     */
     private void initializeGUI() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(900, 700);
         setLayout(new BorderLayout(10, 10));
 
-        // Create main panels
         JPanel topPanel = createInputPanel();
         JPanel centerPanel = createOutputPanel();
         JPanel bottomPanel = createButtonPanel();
 
-        // Add panels to frame
         add(topPanel, BorderLayout.NORTH);
         add(centerPanel, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
 
-        // Center the window on screen
         setLocationRelativeTo(null);
     }
 
-    /**
-     * Create the input panel for route coordinates and hazard zones.
-     * 
-     * @return configured JPanel with input components
-     */
     private JPanel createInputPanel() {
         JPanel panel = new JPanel(new GridLayout(1, 2, 10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Route input section
         JPanel routePanel = new JPanel(new BorderLayout(5, 5));
         routePanel.setBorder(BorderFactory.createTitledBorder("Route Coordinates"));
 
@@ -84,7 +54,6 @@ public class MainGUI extends JFrame {
         routePanel.add(routeLabel, BorderLayout.NORTH);
         routePanel.add(routeScroll, BorderLayout.CENTER);
 
-        // Hazard zone input section
         JPanel hazardPanel = new JPanel(new BorderLayout(5, 5));
         hazardPanel.setBorder(BorderFactory.createTitledBorder("Hazard Zones"));
 
@@ -105,11 +74,6 @@ public class MainGUI extends JFrame {
         return panel;
     }
 
-    /**
-     * Create the output panel for displaying analysis results.
-     * 
-     * @return configured JPanel with output components
-     */
     private JPanel createOutputPanel() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
@@ -129,16 +93,10 @@ public class MainGUI extends JFrame {
         return panel;
     }
 
-    /**
-     * Create the button panel with control buttons.
-     * 
-     * @return configured JPanel with buttons
-     */
     private JPanel createButtonPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
 
-        // Analyze button
         analyzeButton = new JButton("Analyze Route Risk");
         analyzeButton.setFont(new Font("Arial", Font.BOLD, 14));
         analyzeButton.setBackground(new Color(70, 130, 180));
@@ -146,17 +104,14 @@ public class MainGUI extends JFrame {
         analyzeButton.setFocusPainted(false);
         analyzeButton.addActionListener(e -> analyzeRoute());
 
-        // Clear button
         clearButton = new JButton("Clear All");
         clearButton.setFont(new Font("Arial", Font.PLAIN, 14));
         clearButton.addActionListener(e -> clearAll());
 
-        // Load sample data button
         loadSampleDataButton = new JButton("Load Sample Data");
         loadSampleDataButton.setFont(new Font("Arial", Font.PLAIN, 14));
         loadSampleDataButton.addActionListener(e -> loadSampleData());
 
-        // Load Nepal data button
         JButton loadNepalDataButton = new JButton("Load Nepal Data");
         loadNepalDataButton.setFont(new Font("Arial", Font.PLAIN, 14));
         loadNepalDataButton.addActionListener(e -> loadNepalData());
@@ -169,11 +124,6 @@ public class MainGUI extends JFrame {
         return panel;
     }
 
-    /**
-     * Parse route coordinates from the input text area.
-     * 
-     * @return true if parsing was successful
-     */
     private boolean parseRouteInput() {
         try {
             currentRoute = new Route("User Route");
@@ -218,12 +168,6 @@ public class MainGUI extends JFrame {
         }
     }
 
-    /**
-     * Parse hazard zones from the input text area.
-     * AUTOMATIC RISK CALCULATION - No risk weight needed.
-     * 
-     * @return true if parsing was successful
-     */
     private boolean parseHazardZoneInput() {
         try {
             hazardZones.clear();
@@ -268,13 +212,9 @@ public class MainGUI extends JFrame {
         }
     }
 
-    /**
-     * Perform the route risk analysis.
-     */
     private void analyzeRoute() {
         outputArea.setText("Analyzing route...\n");
 
-        // Parse inputs
         if (!parseRouteInput()) {
             return;
         }
@@ -284,13 +224,10 @@ public class MainGUI extends JFrame {
         }
 
         try {
-            // Perform analysis
             RiskAnalyzer.RiskAnalysisResult result = RiskAnalyzer.analyzeRoute(currentRoute, hazardZones);
 
-            // Display results
             outputArea.setText(result.getReport());
 
-            // Add additional information
             outputArea.append("\n=== INPUT SUMMARY ===\n\n");
             outputArea.append(String.format("Route waypoints: %d\n", currentRoute.getWaypointCount()));
             outputArea.append(String.format("Hazard zones: %d\n\n", hazardZones.size()));
@@ -305,9 +242,6 @@ public class MainGUI extends JFrame {
         }
     }
 
-    /**
-     * Clear all input and output fields.
-     */
     private void clearAll() {
         routeInputArea.setText("");
         hazardZoneInputArea.setText("");
@@ -316,23 +250,16 @@ public class MainGUI extends JFrame {
         hazardZones.clear();
     }
 
-    /**
-     * Load sample data for demonstration purposes.
-     * This simulates a route in Southern California with earthquake zones.
-     * AUTOMATIC RISK CALCULATION - No risk weights needed in input.
-     */
     private void loadSampleData() {
-        // Sample route: Los Angeles to San Diego
         routeInputArea.setText(
-                "34.0522,-118.2437\n" + // Los Angeles
-                        "33.8121,-117.9190\n" + // Anaheim
-                        "33.6846,-117.8265\n" + // Irvine
-                        "33.4936,-117.1484\n" + // Temecula
-                        "33.1959,-117.3795\n" + // Escondido
-                        "32.7157,-117.1611" // San Diego
+                "34.0522,-118.2437\n" +
+                        "33.8121,-117.9190\n" +
+                        "33.6846,-117.8265\n" +
+                        "33.4936,-117.1484\n" +
+                        "33.1959,-117.3795\n" +
+                        "32.7157,-117.1611"
         );
 
-        // Sample hazard zones (no risk weights - calculated automatically)
         hazardZoneInputArea.setText(
                 "San Andreas Fault Zone,34.00,-118.00,80\n" +
                         "Newport-Inglewood Fault,33.85,-118.10,45\n" +
@@ -347,34 +274,25 @@ public class MainGUI extends JFrame {
                 "Click 'Analyze Route Risk' to see the automatic analysis.");
     }
 
-    /**
-     * Load Nepal sample data for demonstration purposes.
-     * Route: Kathmandu → Chitwan → Lumbini → Bardiya National Park
-     * Hazards: Earthquake zones, landslide areas, flood zones
-     * AUTOMATIC RISK CALCULATION - No risk weights needed in input.
-     */
     private void loadNepalData() {
-        // Sample route: Major highway route through Nepal
-        // Kathmandu → Chitwan → Lumbini → Bardiya
         routeInputArea.setText(
-                "27.7172,85.3240\n" + // Kathmandu (capital city)
-                        "27.6000,84.5000\n" + // Mugling (junction town)
-                        "27.5291,84.3542\n" + // Chitwan (national park area)
-                        "27.4833,83.5500\n" + // Butwal (city)
-                        "27.5167,83.4500\n" + // Lumbini (Buddha's birthplace)
-                        "28.0000,82.0000\n" + // Dang Valley
-                        "28.3305,81.6084" // Bardiya (western region)
+                "27.7172,85.3240\n" +
+                        "27.6000,84.5000\n" +
+                        "27.5291,84.3542\n" +
+                        "27.4833,83.5500\n" +
+                        "27.5167,83.4500\n" +
+                        "28.0000,82.0000\n" +
+                        "28.3305,81.6084"
         );
 
-        // Nepal hazard zones (earthquakes, landslides, floods)
         hazardZoneInputArea.setText(
-                "Main Himalayan Thrust,27.8,85.5,120\n" + // Major seismic zone near Kathmandu
-                        "Central Nepal Earthquake Zone,28.0,84.5,100\n" + // 2015 earthquake epicenter region
-                        "Mahabharat Range Landslide Zone,27.5,84.7,45\n" + // Landslide-prone hills
-                        "Siwalik Hills Landslide Area,27.6,84.0,35\n" + // Monsoon landslide zone
-                        "Rapti River Flood Plain,27.5,84.4,30\n" + // Seasonal flooding area
-                        "Terai Flood Zone,27.4,83.5,50\n" + // Monsoon flood plains
-                        "Western Nepal Seismic Belt,28.5,82.0,80" // Western earthquake activity
+                "Main Himalayan Thrust,27.8,85.5,120\n" +
+                        "Central Nepal Earthquake Zone,28.0,84.5,100\n" +
+                        "Mahabharat Range Landslide Zone,27.5,84.7,45\n" +
+                        "Siwalik Hills Landslide Area,27.6,84.0,35\n" +
+                        "Rapti River Flood Plain,27.5,84.4,30\n" +
+                        "Terai Flood Zone,27.4,83.5,50\n" +
+                        "Western Nepal Seismic Belt,28.5,82.0,80"
         );
 
         outputArea.setText("Nepal route data loaded! 🇳🇵\n\n" +
@@ -391,34 +309,20 @@ public class MainGUI extends JFrame {
                 "नोट: यो नेपालको प्रमुख राजमार्ग मार्ग हो।");
     }
 
-    /**
-     * Display an error message dialog.
-     * 
-     * @param message The error message to display
-     */
     private void showError(String message) {
         JOptionPane.showMessageDialog(this, message, "Input Error",
                 JOptionPane.ERROR_MESSAGE);
         outputArea.setText("Error: " + message);
     }
 
-    /**
-     * Main method to launch the application.
-     * 
-     * @param args Command line arguments (not used)
-     */
     public static void main(String[] args) {
-        // Use the Event Dispatch Thread for Swing components
         SwingUtilities.invokeLater(() -> {
             try {
-                // Set the look and feel to the system default
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception e) {
-                // If setting look and feel fails, use default
                 e.printStackTrace();
             }
 
-            // Create and display the GUI
             MainGUI gui = new MainGUI();
             gui.setVisible(true);
         });

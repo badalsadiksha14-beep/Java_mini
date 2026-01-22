@@ -6,22 +6,27 @@ import java.util.List;
  * Uses the Haversine formula to calculate great-circle distances
  * between geographic coordinates on a spherical Earth model.
  * 
- * Risk Analysis Algorithm:
- * 1. Calculate distance between each route point and each hazard zone center
- * 2. Determine if the point is inside or near the hazard zone
- * 3. Calculate risk score based on:
- * - Number of intersections with hazard zones
- * - Distance traveled inside hazard zones
- * - Risk weight of each hazard zone
- * 4. Classify overall risk as LOW, MEDIUM, or HIGH
+ * AUTOMATIC RISK CALCULATION ALGORITHM:
+ * 1. Break the route into consecutive segments between waypoints
+ * 2. For each segment:
+ * a. Calculate segment length using Haversine formula
+ * b. Calculate segment midpoint
+ * c. Measure distance from midpoint to each hazard zone center
+ * d. If distance ≤ radius: proximity = 1 - (distance / radius)
+ * e. Calculate segment risk: segmentLength × proximity
+ * 3. Sum all segment risks to get total risk
+ * 4. Normalize: (totalRisk / totalRouteLength) × 100
+ * 5. Classify: 0-30 = LOW, 31-60 = MEDIUM, 61-100 = HIGH
+ * 
+ * NO MANUAL RISK WEIGHTS REQUIRED - All calculations are purely geospatial.
  */
 public class RiskAnalyzer {
     // Earth's radius in kilometers (mean radius)
     private static final double EARTH_RADIUS_KM = 6371.0;
 
-    // Risk classification thresholds
-    private static final double LOW_RISK_THRESHOLD = 50.0;
-    private static final double HIGH_RISK_THRESHOLD = 200.0;
+    // Automatic risk classification thresholds (normalized 0-100 scale)
+    private static final double LOW_RISK_THRESHOLD = 30.0;
+    private static final double HIGH_RISK_THRESHOLD = 60.0;
 
     /**
      * Calculate the great-circle distance between two coordinates using the
@@ -85,19 +90,56 @@ public class RiskAnalyzer {
     }
 
     /**
-     * Check if a coordinate is inside a hazard zone.
+     * Calculate the midpoint coordinate between two points.
+     * Uses simple averaging for small distances (acceptable approximation).
      * 
-     * @param coord The coordinate to check
-     * @param zone  The hazard zone
-     * @return true if the coordinate is inside the zone
+     * @param coord1 First coordinate
+     * @param coord2 Second coordinate
+     * @return Midpoint coordinate
      */
-    public static boolean isInsideHazardZone(Coordinate coord, HazardZone zone) {
-        double distance = calculateDistance(coord, zone.getCenter());
-        return distance <= zone.getRadiusKm();
+    public static Coordinate calculateMidpoint(Coordinate coord1, Coordinate coord2) {
+        double midLat = (coord1.getLatitude() + coord2.getLatitude()) / 2.0;
+        double midLon = (coord1.getLongitude() + coord2.getLongitude()) / 2.0;
+        return new Coordinate(midLat, midLon);
     }
 
     /**
-     * Analyze a route against multiple hazard zones and calculate risk.
+     * Calculate the proximity factor for a point relative to a hazard zone.
+     * 
+     * PROXIMITY FORMULA:
+     * - If distance > radius: proximity = 0 (no risk)
+     * - If distance ≤ radius: proximity = 1 - (distance / radius)
+     * - At center (distance = 0): proximity = 1.0 (maximum risk)
+     * - At edge (distance = radius): proximity = 0.0 (minimal risk)
+     * 
+     * @param point The coordinate to check
+     * @param zone  The hazard zone
+     * @return Proximity factor (0.0 to 1.0)
+     */
+    public static double calculateProximity(Coordinate point, HazardZone zone) {
+        double distance = calculateDistance(point, zone.getCenter());
+
+        if (distance > zone.getRadiusKm()) {
+            return 0.0; // Outside hazard zone - no risk
+        }
+
+        // Inside hazard zone - calculate proximity (1.0 at center, 0.0 at edge)
+        return 1.0 - (distance / zone.getRadiusKm());
+    }
+
+    /**
+     * Analyze a route against multiple hazard zones using automatic risk
+     * calculation.
+     * 
+     * AUTOMATIC SEGMENT-BASED ANALYSIS:
+     * 1. Divide route into segments between consecutive waypoints
+     * 2. For each segment:
+     * - Calculate segment length
+     * - Find segment midpoint
+     * - Calculate proximity to each hazard zone
+     * - Segment risk = segment length × proximity
+     * 3. Total risk = sum of all segment risks
+     * 4. Normalized score = (total risk / total route length) × 100
      * 
      * @param route       The route to analyze
      * @param hazardZones List of hazard zones to check against
@@ -109,99 +151,109 @@ public class RiskAnalyzer {
         }
 
         List<Coordinate> waypoints = route.getWaypoints();
-        double totalDistance = calculateRouteDistance(route);
-        double riskScore = 0.0;
-        int intersectionCount = 0;
-        double distanceInHazardZones = 0.0;
+        double totalRouteDistance = calculateRouteDistance(route);
+        double totalRisk = 0.0;
+        int affectedSegments = 0;
         List<String> riskFactors = new ArrayList<>();
 
-        // Track which zones have been intersected (to count unique intersections)
-        boolean[] zoneIntersected = new boolean[hazardZones.size()];
+        // Track which zones affect the route
+        boolean[] zoneAffected = new boolean[hazardZones.size()];
 
         // Analyze each segment of the route
-        for (int i = 0; i < waypoints.size(); i++) {
-            Coordinate point = waypoints.get(i);
+        for (int i = 0; i < waypoints.size() - 1; i++) {
+            Coordinate start = waypoints.get(i);
+            Coordinate end = waypoints.get(i + 1);
 
-            // Check each hazard zone
+            // Calculate segment properties
+            double segmentLength = calculateDistance(start, end);
+            Coordinate segmentMidpoint = calculateMidpoint(start, end);
+
+            double segmentRisk = 0.0;
+            boolean segmentAffected = false;
+            List<String> segmentHazards = new ArrayList<>();
+
+            // Check each hazard zone's effect on this segment
             for (int j = 0; j < hazardZones.size(); j++) {
                 HazardZone zone = hazardZones.get(j);
-                double distanceToZone = calculateDistance(point, zone.getCenter());
+                double proximity = calculateProximity(segmentMidpoint, zone);
 
-                // Check if point is inside hazard zone
-                if (distanceToZone <= zone.getRadiusKm()) {
-                    // Mark this zone as intersected
-                    if (!zoneIntersected[j]) {
-                        zoneIntersected[j] = true;
-                        intersectionCount++;
-                        riskFactors.add(String.format("Route passes through '%s' (risk weight: %.1f)",
-                                zone.getName(), zone.getRiskWeight()));
-                    }
+                if (proximity > 0) {
+                    // This segment is affected by this hazard zone
+                    double zoneSegmentRisk = segmentLength * proximity;
+                    segmentRisk += zoneSegmentRisk;
+                    segmentAffected = true;
+                    zoneAffected[j] = true;
 
-                    // Calculate distance inside the zone for this segment
-                    if (i > 0) {
-                        double segmentDistance = calculateDistance(waypoints.get(i - 1), point);
-                        distanceInHazardZones += segmentDistance;
-                    }
-
-                    // Add to risk score: closer to center = higher risk
-                    double penetrationDepth = zone.getRadiusKm() - distanceToZone;
-                    double penetrationRatio = penetrationDepth / zone.getRadiusKm();
-                    riskScore += zone.getRiskWeight() * penetrationRatio * 10;
-                }
-                // Check if point is near the hazard zone (within 20% of radius outside)
-                else if (distanceToZone <= zone.getRadiusKm() * 1.2) {
-                    double proximity = (zone.getRadiusKm() * 1.2 - distanceToZone) / (zone.getRadiusKm() * 0.2);
-                    riskScore += zone.getRiskWeight() * proximity * 2;
-
-                    if (!zoneIntersected[j]) {
-                        riskFactors.add(String.format("Route passes near '%s' (within %.1f km)",
-                                zone.getName(), distanceToZone));
-                    }
+                    segmentHazards.add(String.format("%s (proximity: %.2f)",
+                            zone.getName(), proximity));
                 }
             }
+
+            if (segmentAffected) {
+                affectedSegments++;
+                riskFactors.add(String.format("Segment %d→%d (%.2f km): Affected by %s",
+                        i + 1, i + 2, segmentLength,
+                        String.join(", ", segmentHazards)));
+            }
+
+            totalRisk += segmentRisk;
         }
 
-        // Add risk for number of different zones intersected
-        riskScore += intersectionCount * 20;
+        // Normalize risk score to 0-100 scale
+        // Formula: (totalRisk / totalRouteLength) × 100
+        double normalizedRiskScore = totalRouteDistance > 0
+                ? (totalRisk / totalRouteDistance) * 100.0
+                : 0.0;
 
-        // Determine risk level
+        // Cap at 100 for display purposes
+        normalizedRiskScore = Math.min(normalizedRiskScore, 100.0);
+
+        // Determine risk level based on normalized score
         String riskLevel;
-        if (riskScore < LOW_RISK_THRESHOLD) {
+        if (normalizedRiskScore <= LOW_RISK_THRESHOLD) {
             riskLevel = "LOW";
-        } else if (riskScore < HIGH_RISK_THRESHOLD) {
+        } else if (normalizedRiskScore <= HIGH_RISK_THRESHOLD) {
             riskLevel = "MEDIUM";
         } else {
             riskLevel = "HIGH";
         }
 
-        // Add default message if no risk factors found
-        if (riskFactors.isEmpty()) {
-            riskFactors.add("Route does not pass through or near any hazard zones");
+        // Count how many zones affected the route
+        int zonesAffecting = 0;
+        for (boolean affected : zoneAffected) {
+            if (affected)
+                zonesAffecting++;
         }
 
-        return new RiskAnalysisResult(totalDistance, riskScore, riskLevel,
-                intersectionCount, distanceInHazardZones, riskFactors);
+        // Add summary if no risk factors found
+        if (riskFactors.isEmpty()) {
+            riskFactors.add("Route does not pass through any hazard zones");
+        }
+
+        return new RiskAnalysisResult(totalRouteDistance, normalizedRiskScore, riskLevel,
+                affectedSegments, zonesAffecting, riskFactors);
     }
 
     /**
-     * Inner class to hold the results of a risk analysis.
+     * Inner class to hold the results of an automatic risk analysis.
+     * Risk score is normalized to 0-100 scale based on geospatial factors only.
      */
     public static class RiskAnalysisResult {
         private double totalDistance;
-        private double riskScore;
+        private double riskScore; // Normalized 0-100
         private String riskLevel;
-        private int intersectionCount;
-        private double distanceInHazardZones;
+        private int affectedSegments;
+        private int zonesAffecting;
         private List<String> riskFactors;
 
         public RiskAnalysisResult(double totalDistance, double riskScore, String riskLevel,
-                int intersectionCount, double distanceInHazardZones,
+                int affectedSegments, int zonesAffecting,
                 List<String> riskFactors) {
             this.totalDistance = totalDistance;
             this.riskScore = riskScore;
             this.riskLevel = riskLevel;
-            this.intersectionCount = intersectionCount;
-            this.distanceInHazardZones = distanceInHazardZones;
+            this.affectedSegments = affectedSegments;
+            this.zonesAffecting = zonesAffecting;
             this.riskFactors = riskFactors;
         }
 
@@ -217,12 +269,12 @@ public class RiskAnalyzer {
             return riskLevel;
         }
 
-        public int getIntersectionCount() {
-            return intersectionCount;
+        public int getAffectedSegments() {
+            return affectedSegments;
         }
 
-        public double getDistanceInHazardZones() {
-            return distanceInHazardZones;
+        public int getZonesAffecting() {
+            return zonesAffecting;
         }
 
         public List<String> getRiskFactors() {
@@ -230,37 +282,46 @@ public class RiskAnalyzer {
         }
 
         /**
-         * Generate a formatted report of the analysis.
+         * Generate a formatted report of the automatic risk analysis.
          * 
          * @return formatted string report
          */
         public String getReport() {
             StringBuilder sb = new StringBuilder();
-            sb.append("=== ROUTE RISK ANALYSIS REPORT ===\n\n");
+            sb.append("=== AUTOMATIC ROUTE RISK ANALYSIS REPORT ===\n\n");
             sb.append(String.format("Total Route Distance: %.2f km\n", totalDistance));
-            sb.append(String.format("Risk Score: %.2f\n", riskScore));
+            sb.append(String.format("Computed Risk Score: %.2f / 100\n", riskScore));
             sb.append(String.format("Risk Level: %s\n\n", riskLevel));
-            sb.append(String.format("Hazard Zone Intersections: %d\n", intersectionCount));
-            sb.append(String.format("Distance Inside Hazard Zones: %.2f km\n\n", distanceInHazardZones));
-            sb.append("Risk Factors:\n");
+            sb.append(String.format("Route Segments Affected: %d\n", affectedSegments));
+            sb.append(String.format("Hazard Zones Affecting Route: %d\n\n", zonesAffecting));
+            sb.append("Affected Segments:\n");
             for (String factor : riskFactors) {
                 sb.append("  • ").append(factor).append("\n");
             }
             sb.append("\n");
 
-            // Add interpretation
-            sb.append("Interpretation:\n");
+            // Add interpretation based on automatic calculation
+            sb.append("Risk Assessment:\n");
             if (riskLevel.equals("LOW")) {
-                sb.append("  This route is relatively safe. It avoids major hazard zones\n");
-                sb.append("  or only passes near them with minimal exposure.");
+                sb.append("  ✓ This route is SAFE (Risk Score: 0-30)\n");
+                sb.append("  The route avoids hazard zones or has minimal exposure.\n");
+                sb.append("  Normal travel precautions are sufficient.");
             } else if (riskLevel.equals("MEDIUM")) {
-                sb.append("  This route has moderate risk. Consider alternative paths\n");
-                sb.append("  or take appropriate safety precautions.");
+                sb.append("  ⚠ This route has MODERATE RISK (Risk Score: 31-60)\n");
+                sb.append("  The route passes through or near hazard zones.\n");
+                sb.append("  Consider alternative paths or take safety precautions.");
             } else {
-                sb.append("  This route is HIGH RISK! It passes through significant hazard\n");
-                sb.append("  zones. Strongly consider an alternative route or take extensive\n");
-                sb.append("  safety measures if this route must be used.");
+                sb.append("  ⛔ This route is HIGH RISK (Risk Score: 61-100)\n");
+                sb.append("  The route has significant exposure to hazard zones.\n");
+                sb.append("  Strongly consider an alternative route or implement\n");
+                sb.append("  comprehensive safety measures if this route is necessary.");
             }
+
+            sb.append("\n");
+            sb.append("Calculation Method:\n");
+            sb.append("  Risk computed automatically from geospatial proximity.\n");
+            sb.append("  Formula: (Σ segment_length × proximity) / total_distance × 100\n");
+            sb.append("  Proximity = 1 - (distance_to_zone / zone_radius) when inside zone\n");
 
             return sb.toString();
         }

@@ -5,35 +5,31 @@
  * 
  * The zone is defined as a circle with:
  * - Center point (latitude, longitude)
- * - Radius in kilometers
- * - Risk weight (higher value = more dangerous)
+ * - Radius of influence in kilometers
+ * 
+ * AUTOMATIC RISK CALCULATION:
+ * Risk is computed automatically based on geospatial proximity.
+ * No manual risk weights are needed.
  */
 public class HazardZone {
     private Coordinate center;
     private double radiusKm;
-    private double riskWeight;
     private String name;
 
     /**
      * Constructor to create a hazard zone.
      * 
-     * @param center     The center coordinate of the hazard zone
-     * @param radiusKm   The radius of the zone in kilometers (must be positive)
-     * @param riskWeight The risk weight/severity (1.0 = low, 5.0 = high, 10.0 =
-     *                   extreme)
-     * @param name       A descriptive name for the hazard zone
-     * @throws IllegalArgumentException if radius or risk weight are invalid
+     * @param center   The center coordinate of the hazard zone
+     * @param radiusKm The radius of influence in kilometers (must be positive)
+     * @param name     A descriptive name for the hazard zone
+     * @throws IllegalArgumentException if radius is invalid
      */
-    public HazardZone(Coordinate center, double radiusKm, double riskWeight, String name) {
+    public HazardZone(Coordinate center, double radiusKm, String name) {
         if (radiusKm <= 0) {
             throw new IllegalArgumentException("Radius must be positive");
         }
-        if (riskWeight <= 0) {
-            throw new IllegalArgumentException("Risk weight must be positive");
-        }
         this.center = center;
         this.radiusKm = radiusKm;
-        this.riskWeight = riskWeight;
         this.name = name;
     }
 
@@ -56,15 +52,6 @@ public class HazardZone {
     }
 
     /**
-     * Get the risk weight of the hazard zone.
-     * 
-     * @return risk weight value
-     */
-    public double getRiskWeight() {
-        return riskWeight;
-    }
-
-    /**
      * Get the name of the hazard zone.
      * 
      * @return name of the zone
@@ -80,7 +67,7 @@ public class HazardZone {
      */
     @Override
     public String toString() {
-        return String.format("%s: Center %s, Radius %.2f km, Risk Weight %.1f",
-                name, center, radiusKm, riskWeight);
+        return String.format("%s: Center %s, Radius %.2f km",
+                name, center, radiusKm);
     }
 }

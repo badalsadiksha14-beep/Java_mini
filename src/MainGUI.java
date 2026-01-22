@@ -89,8 +89,9 @@ public class MainGUI extends JFrame {
         hazardPanel.setBorder(BorderFactory.createTitledBorder("Hazard Zones"));
 
         JLabel hazardLabel = new JLabel("<html><b>Enter hazard zones (one per line):</b><br>" +
-                "Format: name,latitude,longitude,radius_km,risk_weight<br>" +
-                "Example: Earthquake Zone,34.05,-118.25,50,7.5</html>");
+                "Format: name,latitude,longitude,radius_km<br>" +
+                "Example: Earthquake Zone,34.05,-118.25,50<br>" +
+                "<i>Risk calculated automatically from proximity</i></html>");
         hazardZoneInputArea = new JTextArea(8, 30);
         hazardZoneInputArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         JScrollPane hazardScroll = new JScrollPane(hazardZoneInputArea);
@@ -155,7 +156,13 @@ public class MainGUI extends JFrame {
         loadSampleDataButton.setFont(new Font("Arial", Font.PLAIN, 14));
         loadSampleDataButton.addActionListener(e -> loadSampleData());
 
+        // Load Nepal data button
+        JButton loadNepalDataButton = new JButton("Load Nepal Data");
+        loadNepalDataButton.setFont(new Font("Arial", Font.PLAIN, 14));
+        loadNepalDataButton.addActionListener(e -> loadNepalData());
+
         panel.add(loadSampleDataButton);
+        panel.add(loadNepalDataButton);
         panel.add(analyzeButton);
         panel.add(clearButton);
 
@@ -213,6 +220,7 @@ public class MainGUI extends JFrame {
 
     /**
      * Parse hazard zones from the input text area.
+     * AUTOMATIC RISK CALCULATION - No risk weight needed.
      * 
      * @return true if parsing was successful
      */
@@ -232,9 +240,9 @@ public class MainGUI extends JFrame {
                     continue;
 
                 String[] parts = line.split(",");
-                if (parts.length != 5) {
+                if (parts.length != 4) {
                     showError("Invalid hazard zone format on line: " + line +
-                            "\nExpected format: name,latitude,longitude,radius_km,risk_weight");
+                            "\nExpected format: name,latitude,longitude,radius_km");
                     return false;
                 }
 
@@ -242,10 +250,9 @@ public class MainGUI extends JFrame {
                 double lat = Double.parseDouble(parts[1].trim());
                 double lon = Double.parseDouble(parts[2].trim());
                 double radius = Double.parseDouble(parts[3].trim());
-                double riskWeight = Double.parseDouble(parts[4].trim());
 
                 Coordinate center = new Coordinate(lat, lon);
-                HazardZone zone = new HazardZone(center, radius, riskWeight, name);
+                HazardZone zone = new HazardZone(center, radius, name);
                 hazardZones.add(zone);
             }
 
@@ -312,6 +319,7 @@ public class MainGUI extends JFrame {
     /**
      * Load sample data for demonstration purposes.
      * This simulates a route in Southern California with earthquake zones.
+     * AUTOMATIC RISK CALCULATION - No risk weights needed in input.
      */
     private void loadSampleData() {
         // Sample route: Los Angeles to San Diego
@@ -324,17 +332,63 @@ public class MainGUI extends JFrame {
                         "32.7157,-117.1611" // San Diego
         );
 
-        // Sample hazard zones
+        // Sample hazard zones (no risk weights - calculated automatically)
         hazardZoneInputArea.setText(
-                "San Andreas Fault Zone,34.00,-118.00,80,8.5\n" +
-                        "Newport-Inglewood Fault,33.85,-118.10,45,6.0\n" +
-                        "Elsinore Fault Zone,33.50,-117.30,60,7.0\n" +
-                        "Rose Canyon Fault,32.85,-117.20,35,5.5");
+                "San Andreas Fault Zone,34.00,-118.00,80\n" +
+                        "Newport-Inglewood Fault,33.85,-118.10,45\n" +
+                        "Elsinore Fault Zone,33.50,-117.30,60\n" +
+                        "Rose Canyon Fault,32.85,-117.20,35");
 
         outputArea.setText("Sample data loaded.\n\n" +
                 "This example shows a route from Los Angeles to San Diego\n" +
                 "with major earthquake fault zones in Southern California.\n\n" +
-                "Click 'Analyze Route Risk' to see the analysis.");
+                "Risk will be calculated AUTOMATICALLY from geospatial proximity.\n" +
+                "No manual risk weights needed!\n\n" +
+                "Click 'Analyze Route Risk' to see the automatic analysis.");
+    }
+
+    /**
+     * Load Nepal sample data for demonstration purposes.
+     * Route: Kathmandu → Chitwan → Lumbini → Bardiya National Park
+     * Hazards: Earthquake zones, landslide areas, flood zones
+     * AUTOMATIC RISK CALCULATION - No risk weights needed in input.
+     */
+    private void loadNepalData() {
+        // Sample route: Major highway route through Nepal
+        // Kathmandu → Chitwan → Lumbini → Bardiya
+        routeInputArea.setText(
+                "27.7172,85.3240\n" + // Kathmandu (capital city)
+                        "27.6000,84.5000\n" + // Mugling (junction town)
+                        "27.5291,84.3542\n" + // Chitwan (national park area)
+                        "27.4833,83.5500\n" + // Butwal (city)
+                        "27.5167,83.4500\n" + // Lumbini (Buddha's birthplace)
+                        "28.0000,82.0000\n" + // Dang Valley
+                        "28.3305,81.6084" // Bardiya (western region)
+        );
+
+        // Nepal hazard zones (earthquakes, landslides, floods)
+        hazardZoneInputArea.setText(
+                "Main Himalayan Thrust,27.8,85.5,120\n" + // Major seismic zone near Kathmandu
+                        "Central Nepal Earthquake Zone,28.0,84.5,100\n" + // 2015 earthquake epicenter region
+                        "Mahabharat Range Landslide Zone,27.5,84.7,45\n" + // Landslide-prone hills
+                        "Siwalik Hills Landslide Area,27.6,84.0,35\n" + // Monsoon landslide zone
+                        "Rapti River Flood Plain,27.5,84.4,30\n" + // Seasonal flooding area
+                        "Terai Flood Zone,27.4,83.5,50\n" + // Monsoon flood plains
+                        "Western Nepal Seismic Belt,28.5,82.0,80" // Western earthquake activity
+        );
+
+        outputArea.setText("Nepal route data loaded! 🇳🇵\n\n" +
+                "Route: Kathmandu → Chitwan → Lumbini → Bardiya\n" +
+                "Distance: ~450 km through diverse terrain\n\n" +
+                "Hazard Zones:\n" +
+                "• Main Himalayan Thrust (120 km radius) - Major earthquake zone\n" +
+                "• Central Nepal Earthquake Zone (100 km) - 2015 earthquake region\n" +
+                "• Landslide zones in hilly areas (35-45 km)\n" +
+                "• Flood zones in Terai plains (30-50 km)\n" +
+                "• Western seismic belt (80 km)\n\n" +
+                "Risk calculated AUTOMATICALLY from geospatial proximity!\n\n" +
+                "Click 'Analyze Route Risk' to see the automatic analysis.\n\n" +
+                "नोट: यो नेपालको प्रमुख राजमार्ग मार्ग हो।");
     }
 
     /**

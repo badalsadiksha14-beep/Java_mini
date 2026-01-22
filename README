@@ -1,0 +1,81 @@
+How it works (step by step)
+
+User inputs a route
+
+The route is entered as a sequence of GPS coordinates (latitude and longitude).
+
+These points represent the path a vehicle or person will follow.
+
+User defines hazard zones
+
+Hazard zones are modeled as circular regions with:
+
+A center coordinate
+
+A radius (in kilometers)
+
+A risk weight (severity level)
+
+Geospatial analysis
+
+For each point on the route, the program:
+
+Calculates the real Earth distance to each hazard zone using the Haversine formula.
+
+Checks whether the route passes inside or close to any hazard zone.
+
+Risk calculation
+
+The system computes a risk score based on:
+
+How many hazard zones the route intersects
+
+How long the route stays within risky areas
+
+The severity (weight) of those hazard zones
+
+Risk classification
+
+The final score is classified as:
+
+LOW risk
+
+MEDIUM risk
+
+HIGH risk
+
+Results display
+
+The GUI shows:
+
+Total route distance
+
+Numerical risk score
+
+Risk level
+
+A textual explanation describing why the route is risky
+
+What problem does it solve?
+
+It helps identify unsafe routes before travel by:
+
+Comparing routes against hazard-prone regions
+
+Supporting safer route planning
+
+Simulating logic used in real GIS disaster-management systems
+
+Why this program is important
+
+Demonstrates real geospatial reasoning, not just visualization
+
+Uses multi-layer spatial analysis
+
+Similar logic is used in:
+
+Disaster response planning
+
+Navigation systems
+
+Logistics and infrastructure safety analysis

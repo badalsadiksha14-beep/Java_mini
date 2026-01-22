@@ -9,10 +9,11 @@
 public class Coordinate {
     private double latitude;
     private double longitude;
-    
+
     /**
      * Constructor to create a coordinate with validation.
-     * @param latitude The latitude in degrees (-90 to +90)
+     * 
+     * @param latitude  The latitude in degrees (-90 to +90)
      * @param longitude The longitude in degrees (-180 to +180)
      * @throws IllegalArgumentException if coordinates are out of valid range
      */
@@ -26,25 +27,28 @@ public class Coordinate {
         this.latitude = latitude;
         this.longitude = longitude;
     }
-    
+
     /**
      * Get the latitude value.
+     * 
      * @return latitude in degrees
      */
     public double getLatitude() {
         return latitude;
     }
-    
+
     /**
      * Get the longitude value.
+     * 
      * @return longitude in degrees
      */
     public double getLongitude() {
         return longitude;
     }
-    
+
     /**
      * String representation of the coordinate.
+     * 
      * @return formatted coordinate string
      */
     @Override
